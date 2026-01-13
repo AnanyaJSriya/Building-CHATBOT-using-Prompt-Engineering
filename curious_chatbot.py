@@ -1,7 +1,3 @@
-pip install streamlit
-curious_chatbot.py
-import streamlit as st
-
 BOT_NAME = "Curious"
 
 if "conversation_active" not in st.session_state:
