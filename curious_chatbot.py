@@ -1,5 +1,5 @@
 pip install streamlit
-📄 curious_chatbot.py
+curious_chatbot.py
 import streamlit as st
 
 BOT_NAME = "Curious"
