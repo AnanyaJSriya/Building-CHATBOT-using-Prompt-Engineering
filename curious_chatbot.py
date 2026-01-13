@@ -1,4 +1,3 @@
-
 pip install streamlit
 📄 curious_chatbot.py
 import streamlit as st
