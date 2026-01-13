@@ -1,3 +1,5 @@
+import streamlit as st
+
 BOT_NAME = "Curious"
 
 if "conversation_active" not in st.session_state:
@@ -20,7 +22,6 @@ def curious_question_generator(topic):
     return questions[len(st.session_state.messages) % len(questions)]
 
 def generate_report(messages):
-    content = " ".join(messages)
     report = (
         "Here is what I learned from our peer learning session:\n\n"
         "Through your explanations, I gained clarity on the topic and its real-world relevance. "
@@ -31,7 +32,7 @@ def generate_report(messages):
         "Overall, this learning session helped me develop curiosity, analytical thinking, and appreciation for structured explanation. "
         "Peer learning made the topic more engaging, interactive, and meaningful."
     )
-    return report[:1200]
+    return report
 
 st.title("🤖 Curious – Your Peer Learning Companion")
 
@@ -53,6 +54,5 @@ elif user_input == "What did you learn?" and st.session_state.conversation_activ
 
 elif st.session_state.conversation_active and user_input:
     st.session_state.messages.append(user_input)
-    question = curious_question_generator(st.session_state.messages[-1])
+    question = curious_question_generator(user_input)
     st.markdown(f"**{BOT_NAME}:** {question}")
-
