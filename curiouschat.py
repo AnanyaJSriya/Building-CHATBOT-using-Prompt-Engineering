@@ -1,8 +1,9 @@
 import streamlit as st
-st.audio_input("Record Your Audio")
 import time
 import anthropic
 import os
+import io
+import speech_recognition as sr
 
 # Page config
 st.set_page_config(page_title="Curious - Your Personal Student", layout="centered")
@@ -15,8 +16,7 @@ if 'stage' not in st.session_state:
     st.session_state.round = 0
     st.session_state.conversation_history = []
     st.session_state.learned_points = []
-    st.session_state.recording = False
-    st.session_state.recording_start_time = None
+    st.session_state.audio_data = None
 
 # Header
 st.markdown("<h1 style='text-align: center;'>🤖 Curious</h1>", unsafe_allow_html=True)
@@ -46,24 +46,21 @@ def get_ai_response(prompt, conversation_context=""):
     except Exception as e:
         return f"I'm having trouble processing that. Can you explain more?"
 
-def transcribe_audio():
-    recognizer = sr.Recognizer()
-    with sr.Microphone() as source:
-        st.info("🎤 Listening... (Double-click stopped, now recording)")
-        recognizer.adjust_for_ambient_noise(source, duration=1)
+def transcribe_audio(audio_bytes):
+    try:
+        recognizer = sr.Recognizer()
+        audio_file = sr.AudioFile(io.BytesIO(audio_bytes))
         
-        try:
-            audio = recognizer.listen(source, timeout=300, phrase_time_limit=300)
-            text = recognizer.recognize_google(audio)
+        with audio_file as source:
+            audio_data = recognizer.record(source)
+            text = recognizer.recognize_google(audio_data)
             return text
-        except sr.WaitTimeoutError:
-            return "TIMEOUT"
-        except sr.UnknownValueError:
-            return "Could not understand audio"
-        except sr.RequestError:
-            return "Could not request results"
-        except Exception as e:
-            return f"Error: {str(e)}"
+    except sr.UnknownValueError:
+        return "Could not understand audio"
+    except sr.RequestError:
+        return "Could not request results from Google Speech Recognition service"
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 # Stage: Name Input
 if st.session_state.stage == 'name':
@@ -115,56 +112,44 @@ elif st.session_state.stage == 'learning':
     
     st.markdown("---")
     
-    # Microphone instructions
-    st.info("🎤 Double-click the button below to start speaking. Click once when done (max 5 minutes).")
+    # Audio input
+    st.info("🎤 Record your audio below (max 5 minutes). Click 'Browse files' or drag and drop to upload.")
     
-    col1, col2 = st.columns([1, 4])
+    audio_data = st.audio_input("Record your explanation")
     
-    with col1:
-        if st.button("🎤 Speak", key=f"mic_{st.session_state.round}"):
-            if not st.session_state.recording:
-                st.session_state.recording = True
-                st.session_state.recording_start_time = time.time()
-                st.rerun()
-            else:
-                st.session_state.recording = False
-                with st.spinner("Processing your speech..."):
-                    user_speech = transcribe_audio()
+    if audio_data is not None:
+        st.session_state.audio_data = audio_data
+    
+    if st.button("Submit Audio", key=f"submit_{st.session_state.round}"):
+        if st.session_state.audio_data is not None:
+            with st.spinner("Processing your speech..."):
+                audio_bytes = st.session_state.audio_data.getvalue()
+                user_speech = transcribe_audio(audio_bytes)
+                
+                if user_speech and user_speech not in ["Could not understand audio", "Could not request results from Google Speech Recognition service"]:
+                    st.session_state.conversation_history.append(f"**You:** {user_speech}")
                     
-                    if user_speech and user_speech not in ["TIMEOUT", "Could not understand audio", "Could not request results"]:
-                        st.session_state.conversation_history.append(f"**You:** {user_speech}")
-                        
-                        # Get AI response
-                        context = f"You are Curious, a student learning about {st.session_state.topic}. The teacher just explained: {user_speech}. Ask an inquisitive question to learn more. Keep it concise and curious."
-                        
-                        ai_question = get_ai_response(
-                            f"Based on this explanation about {st.session_state.topic}, ask one specific inquisitive question to deepen understanding: {user_speech}",
-                            context
-                        )
-                        
-                        st.session_state.conversation_history.append(f"**Curious:** {ai_question}")
-                        st.session_state.learned_points.append(user_speech)
-                        st.session_state.round += 1
-                        
-                        if st.session_state.round >= 5:
-                            st.session_state.stage = 'summary'
-                        
-                        st.rerun()
-                    else:
-                        st.error("Could not capture audio. Please try again.")
-    
-    with col2:
-        if st.session_state.recording and st.session_state.recording_start_time:
-            elapsed = time.time() - st.session_state.recording_start_time
-            remaining = 300 - elapsed
-            
-            if remaining <= 60 and remaining > 0:
-                st.warning(f"⏰ Reminder: {int(remaining)} seconds remaining!")
-            elif remaining <= 0:
-                st.error("⏰ Time's up! Click the microphone to submit.")
-                st.session_state.recording = False
-            else:
-                st.info(f"⏱️ Recording... {int(remaining)} seconds remaining")
+                    # Get AI response
+                    context = f"You are Curious, a student learning about {st.session_state.topic}. The teacher just explained: {user_speech}. Ask an inquisitive question to learn more. Keep it concise and curious."
+                    
+                    ai_question = get_ai_response(
+                        f"Based on this explanation about {st.session_state.topic}, ask one specific inquisitive question to deepen understanding: {user_speech}",
+                        context
+                    )
+                    
+                    st.session_state.conversation_history.append(f"**Curious:** {ai_question}")
+                    st.session_state.learned_points.append(user_speech)
+                    st.session_state.round += 1
+                    st.session_state.audio_data = None
+                    
+                    if st.session_state.round >= 5:
+                        st.session_state.stage = 'summary'
+                    
+                    st.rerun()
+                else:
+                    st.error(f"Could not process audio: {user_speech}")
+        else:
+            st.error("Please record audio first!")
 
 # Stage: Summary
 elif st.session_state.stage == 'summary':
@@ -186,6 +171,5 @@ elif st.session_state.stage == 'summary':
         st.session_state.round = 0
         st.session_state.conversation_history = []
         st.session_state.learned_points = []
-        st.session_state.recording = False
-        st.session_state.recording_start_time = None
+        st.session_state.audio_data = None
         st.rerun()
