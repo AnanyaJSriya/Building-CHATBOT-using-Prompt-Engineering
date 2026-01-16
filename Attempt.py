@@ -2,7 +2,7 @@ import streamlit as st
 from anthropic import Anthropic
 import json
 from datetime import datetime
-from fpdf import FPDF
+from fpdf2 import FPDF
 import base64
 import os
 from audio_recorder_streamlit import audio_recorder
