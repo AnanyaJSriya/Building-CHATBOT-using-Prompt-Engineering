@@ -7,7 +7,6 @@ management, prompt engineering, and voice interaction.
 
 from typing import Dict, List, Optional
 import os
-from dotenv import load_load_dotenv
 from dotenv import load_dotenv
 
 class CuriousBot:
