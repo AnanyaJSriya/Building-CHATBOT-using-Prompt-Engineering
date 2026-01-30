@@ -1,90 +1,45 @@
-"""
-Curious Voice Bot - An AI learning companion that helps users practice teaching.
-
-This module provides the main CuriousBot class that handles conversation
-management, prompt engineering, and voice interaction.
-"""
-
-from typing import Dict, List, Optional
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # Fixed the typo here
+import streamlit as st
 
-class CuriousBot:
-    """
-    A voice-enabled AI chatbot that acts as a curious student.
-    
-    The bot uses advanced prompt engineering to ask thoughtful questions
-    and help users practice teaching and learning through explanation.
-    
-    Attributes:
-        api_key (str): OpenAI API key
-        conversation_history (List[Dict]): Conversation context
-        student_persona (str): The AI's student personality
-    """
-    
-    def __init__(self, api_key: Optional[str] = None):
-        """
-        Initialize the Curious Bot.
-        
-        Args:
-            api_key: OpenAI API key. If None, loads from environment.
-        """
-        load_dotenv()
-        self.api_key = api_key or os.getenv("OPENAI_API_KEY")
-        self.conversation_history: List[Dict[str, str]] = []
-        self._initialize_system_prompt()
-    
-    def _initialize_system_prompt(self) -> None:
-        """Set up the curious student persona through system prompt."""
-        # Your prompt engineering logic here
-        pass
-    
-    def process_input(self, user_input: str) -> str:
-        """
-        Process user input and generate curious student response.
-        
-        Args:
-            user_input: The user's teaching/explanation
-            
-        Returns:
-            str: The curious student's response/question
-        """
-        # Implementation
-        pass
-    
-    def listen(self) -> str:
-        """
-        Capture voice input from user.
-        
-        Returns:
-            str: Transcribed text from speech
-        """
-        # Voice input implementation
-        pass
-    
-    def speak(self, text: str) -> None:
-        """
-        Convert text to speech and play it.
-        
-        Args:
-            text: Text to be spoken
-        """
-        # Text-to-speech implementation
-        pass
+# Load environment variables from .env file
+load_dotenv()
 
+def get_response(user_input):
+    """
+    Placeholder function for chatbot logic. 
+    In a real scenario, you'd call an LLM API here.
+    """
+    return f"You said: {user_input}. I am a curious bot learning prompt engineering!"
+
+
+# Streamlit UI
 def main():
-    """Main entry point for the Curious Bot application."""
-    bot = CuriousBot()
-    print("Curious Bot started! Start teaching me something...")
-    
-    while True:
-        user_input = bot.listen()
-        if user_input.lower() in ['exit', 'quit', 'goodbye']:
-            bot.speak("Thank you for teaching me! Goodbye!")
-            break
-        
-        response = bot.process_input(user_input)
-        bot.speak(response)
+    st.set_page_config(page_title="Curious Chatbot", page_icon="🤖")
+    st.title("Building a Chatbot using Prompt Engineering")
+    st.write("Welcome! Type something below to chat with the bot.")
+
+    # Chat interface
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+
+    # Display chat history
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    # User input
+    if prompt := st.chat_input("Ask me anything..."):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
+
+        # Bot response
+        response = get_response(prompt)
+        st.session_state.messages.append({"role": "assistant", "content": response})
+        with st.chat_message("assistant"):
+            st.markdown(response)
+
 
 if __name__ == "__main__":
     main()
