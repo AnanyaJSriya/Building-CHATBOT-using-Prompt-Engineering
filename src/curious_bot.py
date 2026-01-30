@@ -1,19 +1,18 @@
-import os
-from dotenv import load_dotenv  # Fixed the typo here
+from dotenv import load_dotenv
 import streamlit as st
+
 
 # Load environment variables from .env file
 load_dotenv()
 
+
 def get_response(user_input):
     """
-    Placeholder function for chatbot logic. 
-    In a real scenario, you'd call an LLM API here.
+    Placeholder function for chatbot logic.
     """
     return f"You said: {user_input}. I am a curious bot learning prompt engineering!"
 
 
-# Streamlit UI
 def main():
     st.set_page_config(page_title="Curious Chatbot", page_icon="🤖")
     st.title("Building a Chatbot using Prompt Engineering")
