@@ -18,12 +18,12 @@ jobs:
           pip install pytest flake8
           pip install -r requirements.txt
           
-      - name: Lint with flake8
-        # This will pass because we fixed the missing imports in curious_bot.py
+      - name: Lint Check
+        # Only checks for critical errors (F821), ignoring style warnings
         run: flake8 src/ --count --select=E9,F63,F7,F82 --show-source --statistics
 
-      - name: Run Proof Tests
+      - name: Run Validated Tests
         env:
           PYTHONPATH: src
-          OPENAI_API_KEY: "sk-dummy-key"
+          OPENAI_API_KEY: "sk-dummy-key-for-testing"
         run: pytest tests/
