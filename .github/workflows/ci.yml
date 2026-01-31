@@ -5,6 +5,8 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: .  # This is the crucial fix for Screenshot 172
     steps:
       - uses: actions/checkout@v3
       
@@ -20,7 +22,6 @@ jobs:
           pip install -r requirements.txt
           
       - name: Lint with flake8
-        # This ensures the code is logically sound without being annoying about spaces
         run: flake8 src/ --count --select=E9,F63,F7,F82 --show-source --statistics
 
       - name: Run tests with pytest
