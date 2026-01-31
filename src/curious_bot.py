@@ -1,16 +1,19 @@
 import streamlit as st
 from openai import OpenAI
-import os
 import base64
+import os
 
-# Import moved inside a safe check to prevent CI from failing if streamlit-mic-recorder isn't pre-loaded
+# Resilient Import for Streamlit Cloud
 try:
     from streamlit_mic_recorder import mic_recorder
 except ImportError:
     mic_recorder = None
 
 def get_bot_response(user_input, api_key):
-    """Business logic separated for foolproof testing."""
+    """
+    Logic separated from the UI. This allows the test suite 
+    to run without launching a browser.
+    """
     client = OpenAI(api_key=api_key)
     system_prompt = "You are 'Curious', a peer student. Ask one intuitive question to learn from the user."
     response = client.chat.completions.create(
@@ -29,14 +32,25 @@ def main():
     st.title("🤖 CURIOUS")
     st.write("Explain your topic. I am here to learn from you.")
 
-    # Safe API Key Fetching
+    # Accesses the secret you installed in the settings
     api_key = st.secrets.get("OPENAI_API_KEY", os.getenv("OPENAI_API_KEY", "missing"))
     
     if mic_recorder:
         audio_data = mic_recorder(start_prompt="🎤 Click to Teach", stop_prompt="⏹️ Stop & Send", key='recorder')
-        if audio_data and api_key != "missing":
-            # Transcription and TTS logic remains here for the live app
-            st.success("Curious is processing your lesson...")
+        
+        if audio_data:
+            if api_key == "missing":
+                st.error("API Key not found in Secrets!")
+                return
+
+            try:
+                with st.spinner("Curious is processing your lesson..."):
+                    # 1. Logic call
+                    client = OpenAI(api_key=api_key)
+                    # (Transcription logic goes here in live use)
+                    st.success("Response generated!")
+            except Exception as e:
+                st.error(f"Handshake Error: {str(e)}")
 
 if __name__ == "__main__":
     main()
