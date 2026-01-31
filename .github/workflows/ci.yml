@@ -5,8 +5,6 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      PYTHONPATH: .  # This is the crucial fix for Screenshot 172
     steps:
       - uses: actions/checkout@v3
       
@@ -18,11 +16,14 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 black pytest pytest-cov
+          pip install pytest pytest-cov flake8
+          # Install from our version-agnostic requirements file
           pip install -r requirements.txt
           
-      - name: Lint with flake8
+      - name: Lint for Syntax Errors
         run: flake8 src/ --count --select=E9,F63,F7,F82 --show-source --statistics
 
-      - name: Run tests with pytest
-        run: pytest tests/ --cov=src
+      - name: Run Proof Tests
+        env:
+          PYTHONPATH: src
+        run: pytest tests/
