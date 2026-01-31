@@ -34,8 +34,8 @@ jobs:
 
       - name: Run Proof Tests
         env:
-          # We set a dummy key so the code doesn't crash during the test initialization
-          OPENAI_API_KEY: "sk-test-key-for-ci-logic-only"
-          PYTHONPATH: src
+          # This is the crucial fix for ModuleNotFoundError
+          PYTHONPATH: .
+          OPENAI_API_KEY: "sk-test-key-for-logic-only"
         run: |
           pytest tests/
