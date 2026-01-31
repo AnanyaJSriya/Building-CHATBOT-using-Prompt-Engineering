@@ -1,8 +1,15 @@
 import streamlit as st
+from openai import OpenAI
 import os
-from openai import OpenAI  # Industry standard for "Zero-Lag" Market Launch
-from streamlit_mic_recorder import mic_recorder
-import base64
+
+# Resilient key fetching: Try Streamlit secrets first, then environment variables
+def get_api_key():
+    try:
+        return st.secrets["OPENAI_API_KEY"]
+    except:
+        return os.getenv("OPENAI_API_KEY", "missing_key_for_testing")
+
+client = OpenAI(api_key=get_api_key())
 
 # THE DESIGN: Brand-Specific Sand-Yellow & Teal
 st.markdown("""
